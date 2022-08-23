@@ -1,0 +1,145 @@
+{
+    "name": "kostenuebernahme-fuer-hilfsmittel",
+    "title": "RuL-OZG-110",
+    "description": "Kosten\\u00fcbernahme f\\u00fcr Hilfsmittel",
+    "type": "object",
+    "properties": {
+        "art-des-hilfsmittels": {
+            "type": "string",
+            "enum": [
+                "Brille",
+                "H\\u00f6rger\\u00e4t",
+                "Zahnprothese",
+                "Zahnspange",
+                "Orthop\\u00e4dische Schuhe",
+                "anderes Hilfsmittel"
+            ],
+            "title": "Art des Hilfsmittels"
+        },
+        "optional-anderes-hilfsmittel": {
+            "type": "string",
+            "title": "Optional: anderes Hilfsmittel"
+        },
+        "handelt-es-sich-um-eine-beschadigung-oder-den": {
+            "type": "string",
+            "enum": [
+                "Besch\\u00e4digung",
+                "Verlust"
+            ],
+            "title": "Handelt es sich um eine Besch\\u00e4digung oder den Verlust?"
+        },
+        "aktenzeichen-bei-ihrer-berufsgenossenschaft-oder": {
+            "type": "string",
+            "title": "Aktenzeichen bei Ihrer Berufsgenossenschaft oder Unfallkasse"
+        },
+        "anrede": {
+            "type": "string",
+            "enum": [
+                "Frau",
+                "Herr",
+                "keine"
+            ],
+            "title": "Anrede"
+        },
+        "vorname": {
+            "type": "string",
+            "title": "Vorname"
+        },
+        "nachname": {
+            "type": "string",
+            "title": "Nachname"
+        },
+        "geburtsdatum": {
+            "type": "string",
+            "format": "date",
+            "title": "Geburtsdatum"
+        },
+        "geschlecht": {
+            "type": "string",
+            "enum": [
+                "divers",
+                "m\\u00e4nnlich",
+                "weiblich"
+            ],
+            "title": "Geschlecht"
+        },
+        "person_strasse": {
+            "type": "string",
+            "title": "Stra\\u00dfe und Hausnummer"
+        },
+        "person_postleitzahl": {
+            "type": "string",
+            "title": "Postleitzahl"
+        },
+        "person_ort": {
+            "type": "string",
+            "title": "Ort"
+        },
+        "taetigkeit_beschaeftigungsbeginn": {
+            "type": "string",
+            "title": "Als was waren Sie zum Zeitpunkt der Besch\\u00e4digung bzw. des Verlusts t\\u00e4tig?"
+        },
+        "name_unternehmen": {
+            "type": "string",
+            "title": "Name des Unternehmens bzw. der Einrichtung, bei dem bzw. der Sie besch\\u00e4ftigt sind."
+        },
+        "unternehmen_strhnr": {
+            "type": "string",
+            "title": "Stra\\u00dfe und Hausnummer"
+        },
+        "unternehmen_postleitzahl": {
+            "type": "string",
+            "title": "Postleitzahl"
+        },
+        "unternehmen_ort": {
+            "type": "string",
+            "title": "Ort"
+        },
+        "beschreibung": {
+            "type": "string",
+            "title": "Bitte beschreiben Sie, wie die Besch\\u00e4digung bzw. der Verlust zustande gekommen ist."
+        },
+        "dateianhaenge": {
+            "type": "array",
+            "items": {
+                "type": "string",
+                "format": "binary",
+                "contentMediaType": [
+                    ".pdf",
+                    ".jpg",
+                    ".png"
+                ]
+            },
+            "title": "Dateianh\\u00e4nge"
+        },
+        "kontakt": {
+            "type": "string",
+            "enum": [
+                "\\u00dcber das Postfach des Nutzerkontos Bund",
+                "De-Mail",
+                "per Post"
+            ],
+            "title": "Wie m\\u00f6chten Sie kontaktiert werden?"
+        }
+    },
+    "required": [
+        "art-des-hilfsmittels",
+        "handelt-es-sich-um-eine-beschadigung-oder-den",
+        "anrede",
+        "vorname",
+        "nachname",
+        "geburtsdatum",
+        "geschlecht",
+        "person_strasse",
+        "person_postleitzahl",
+        "person_ort",
+        "taetigkeit_beschaeftigungsbeginn",
+        "name_unternehmen",
+        "unternehmen_strhnr",
+        "unternehmen_postleitzahl",
+        "unternehmen_ort",
+        "beschreibung",
+        "dateianhaenge",
+        "kontakt"
+    ]
+}
