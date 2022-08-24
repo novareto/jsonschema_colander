@@ -7,20 +7,14 @@ from .converter import JSONFieldParameters, converter
 
 
 string_formats = {
-    'default': colander.String,
     'date': colander.Date,
     'time': colander.Time,
     'date-time': colander.DateTime,
-    'email': colander.String,
-    'ipv4': colander.String,
-    'ipv6': colander.String,
-    'binary': colander.String,
-    'uri': colander.String
 }
 
 
 @converter.register('string')
-class StringParameters(JSONFieldParameters):
+class String(JSONField):
 
     supported = {'string'}
     allowed = {
@@ -36,7 +30,7 @@ class StringParameters(JSONFieldParameters):
     def get_factory(self):
         if self.factory is not None:
             return self.factory
-        return string_formats[self.format]
+        return string_formats.get(self.format, colander.String)
 
     @classmethod
     def extract(cls, params: dict, available: set):
@@ -72,7 +66,7 @@ class StringParameters(JSONFieldParameters):
 
 @converter.register('integer')
 @converter.register('number')
-class NumberParameters(JSONFieldParameters):
+class Number(JSONField):
 
     supported = {'integer', 'number'}
     allowed = {
@@ -108,7 +102,7 @@ class NumberParameters(JSONFieldParameters):
 
 
 @converter.register('boolean')
-class BooleanParameters(JSONFieldParameters):
+class Boolean(JSONField):
     supported = {'boolean'}
 
     @classmethod
@@ -124,13 +118,13 @@ class BooleanParameters(JSONFieldParameters):
 
 
 @converter.register('array')
-class ArrayParameters(JSONFieldParameters):
+class Array(JSONField):
 
     supported = {'array'}
     allowed = {
         'enum', 'items', 'minItems', 'maxItems', 'default', 'definitions'
     }
-    subfield: Optional[JSONFieldParameters] = None
+    subfield: Optional[JSONField] = None
 
     def __init__(self, *args, subfield=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -164,7 +158,7 @@ class ArrayParameters(JSONFieldParameters):
         return validators, attributes
 
     @classmethod
-    def from_json_field(cls, name: str, required: bool, params: dict):
+    def from_json(cls, name: str, required: bool, params: dict):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
             raise NotImplementedError(
@@ -180,7 +174,7 @@ class ArrayParameters(JSONFieldParameters):
                 if not definitions:
                     raise NotImplementedError('Missing definitions.')
                 items = definitions[ref.split('/')[-1]]
-            subfield = converter.lookup(items['type']).from_json_field(
+            subfield = converter.lookup(items['type']).from_json(
                 name, False, items
             )
         else:
@@ -198,14 +192,14 @@ class ArrayParameters(JSONFieldParameters):
 
 
 @converter.register('object')
-class ObjectParameters(JSONFieldParameters):
+class Object(JSONField):
 
-    ignore = JSONFieldParameters.ignore | {
+    ignore = JSONField.ignore | {
         '$id', 'id', '$schema', '$comment'
     }
     supported = {'object'}
     allowed = {'required', 'properties', 'definitions'}
-    fields: Dict[str, JSONFieldParameters]
+    fields: Dict[str, JSONField]
 
     def __init__(self, fields, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -230,7 +224,7 @@ class ObjectParameters(JSONFieldParameters):
         )
 
     @classmethod
-    def from_json_field(
+    def from_json(
             cls, name: str, required: bool, params: dict,
             include: Optional[Iterable] = None,
             exclude: Optional[Iterable] = None
@@ -265,7 +259,7 @@ class ObjectParameters(JSONFieldParameters):
                 field = converter.lookup(type_)
                 if 'definitions' in field.allowed:
                     definition['definitions'] = definitions
-                fields[property_name] = field.from_json_field(
+                fields[property_name] = field.from_json(
                     property_name,
                     property_name in requirements, definition
                 )
