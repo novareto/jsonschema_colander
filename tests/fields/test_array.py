@@ -1,11 +1,11 @@
 import pytest
 import colander
-from jsonschema_colander.types import ArrayParameters
+from jsonschema_colander.types import Array
 
 
 def test_array_without_items():
 
-    field = ArrayParameters.from_json_field('test', True, {
+    field = Array.from_json('test', True, {
         "type": "array",
     })
 
@@ -18,7 +18,7 @@ def test_array_without_items():
 
 def test_simple_array():
 
-    field = ArrayParameters.from_json_field('test', True, {
+    field = Array.from_json('test', True, {
         "type": "array",
         "items": {
             "type": "number"
@@ -31,7 +31,7 @@ def test_simple_array():
 
 def test_array_length():
 
-    field = ArrayParameters.from_json_field('test', True, {
+    field = Array.from_json('test', True, {
         "type": "array",
         "minItems": 2,
         "maxItems": 3,
@@ -49,7 +49,7 @@ def test_array_length():
 
 def test_complex_array():
 
-    field = ArrayParameters.from_json_field('test', False, {
+    field = Array.from_json('test', False, {
         "type": "array",
         "default": [[1]],
         "items": {
@@ -67,7 +67,7 @@ def test_complex_array():
 
 def test_complex_array_of_objects():
 
-    field = ArrayParameters.from_json_field('test', True, {
+    field = Array.from_json('test', True, {
         "type": "array",
         "items": {
             "type": "object",
@@ -102,7 +102,7 @@ def test_complex_array_of_objects():
 
 
 def test_files_array():
-    field = ArrayParameters.from_json_field('test', True, {
+    field = Array.from_json('test', True, {
         "type": "array",
         "items": {
             "type": "string",

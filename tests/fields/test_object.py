@@ -1,16 +1,16 @@
 import pytest
 import colander
-from jsonschema_colander.types import ObjectParameters
+from jsonschema_colander.types import Object
 
 
 def test_object():
 
     with pytest.raises(NotImplementedError):
-        field = ObjectParameters.from_json_field('test', True, {
+        field = Object.from_json('test', True, {
             "type": "object",
         })
 
-    field = ObjectParameters.from_json_field('test', True, {
+    field = Object.from_json('test', True, {
         "type": "object",
         "properties": {
             "fruits": {
@@ -27,7 +27,7 @@ def test_object():
 
 
 def test_ref_object():
-    root_field = ObjectParameters.from_json_field('test', True, {
+    root_field = Object.from_json('test', True, {
         "type": "object",
         "properties": {
             "name": {

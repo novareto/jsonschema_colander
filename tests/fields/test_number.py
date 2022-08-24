@@ -2,11 +2,11 @@ import pytest
 import hamcrest
 import colander
 import jsonschema_colander.validators
-from jsonschema_colander.types import NumberParameters
+from jsonschema_colander.types import Number
 
 
 def test_max():
-    field = NumberParameters.from_json_field('test', True, {
+    field = Number.from_json('test', True, {
         "type": "integer",
         "maximum": 20
     })
@@ -31,7 +31,7 @@ def test_max():
 
 
 def test_min():
-    field = NumberParameters.from_json_field('test', True, {
+    field = Number.from_json('test', True, {
         "type": "number",
         "minimum": 2.99,
         "default": 5.0
@@ -57,7 +57,7 @@ def test_min():
 
 def test_exclusive_minmax():
 
-    field = NumberParameters.from_json_field('test', True, {
+    field = Number.from_json('test', True, {
         "type": "integer",
         "exclusiveMinimum": 2,
         "exclusiveMaximum": 15
@@ -96,7 +96,7 @@ def test_exclusive_minmax():
 
 
 # def test_enum():
-#     field = NumberParameters.from_json_field('test', True, {
+#     field = Number.from_json('test', True, {
 #         "type": "integer",
 #         "enum": [1, 2]
 #     })

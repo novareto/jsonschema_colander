@@ -2,8 +2,9 @@ import re
 import colander
 from functools import partial
 from typing import Optional, Dict, ClassVar, Type, Iterable
+from .meta import JSONField
 from .validators import NumberRange
-from .converter import JSONFieldParameters, converter
+from .converter import converter
 
 
 string_formats = {
@@ -49,9 +50,6 @@ class String(JSONField):
             attributes['choices'] = [(v, v) for v in params['enum']]
         if 'format' in available:
             format = attributes['format'] = params['format']
-            if format not in string_formats:
-                raise NotImplementedError(
-                    f'String format not implemented: {format}.')
             if format == 'binary':
                 if 'contentMediaType' in available:
                     ctype = params['contentMediaType']

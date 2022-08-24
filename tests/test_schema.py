@@ -11,19 +11,19 @@ They are created just like any other field.
 
 def test_standalone_schema(person_schema):
 
-    schema = jsonschema_colander.types.ObjectParameters.from_json_field(
+    schema = jsonschema_colander.types.Object.from_json(
         None, False, person_schema
     )
 
     hamcrest.assert_that(schema.fields, hamcrest.has_entries({
         "firstName": hamcrest.instance_of(
-            jsonschema_colander.types.StringParameters),
+            jsonschema_colander.types.String),
         "lastName": hamcrest.instance_of(
-            jsonschema_colander.types.StringParameters),
+            jsonschema_colander.types.String),
         "age": hamcrest.instance_of(
-            jsonschema_colander.types.NumberParameters),
+            jsonschema_colander.types.Number),
         "homepage": hamcrest.instance_of(
-            jsonschema_colander.types.StringParameters
+            jsonschema_colander.types.String
         )
     }))
 
@@ -34,7 +34,7 @@ def test_standalone_schema(person_schema):
 
 # def test_schema_as_field(person_schema):
 
-#     schema = jsonschema_colander.types.ObjectParameters.from_json_field(
+#     schema = jsonschema_colander.types.Object.from_json(
 #         'fieldname', True, person_schema
 #     )
 

@@ -1,19 +1,11 @@
 import pytest
 import hamcrest
 import colander
-from jsonschema_colander.types import StringParameters
-
-
-def test_unknown_format():
-    with pytest.raises(NotImplementedError):
-        StringParameters.from_json_field('test', True, {
-            "type": "string",
-            "format": "foobar"
-        })
+from jsonschema_colander.types import String
 
 
 def test_email_format():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "format": "email"
     })
@@ -21,7 +13,7 @@ def test_email_format():
 
 
 def test_date_format():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "format": "date"
     })
@@ -29,7 +21,7 @@ def test_date_format():
 
 
 def test_time_format():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "format": "time"
     })
@@ -37,7 +29,7 @@ def test_time_format():
 
 
 def test_datetime_format():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "format": "date-time"
     })
@@ -45,7 +37,7 @@ def test_datetime_format():
 
 
 # def test_uri_format():
-#     field = StringParameters.from_json_field('test', True, {
+#     field = String.from_json('test', True, {
 #         "minLength": 1,
 #         "maxLength": 2083,
 #         "format": "uri",
@@ -61,7 +53,7 @@ def test_datetime_format():
 
 
 # def test_password_format():
-#     field = StringParameters.from_json_field('test', True, {
+#     field = String.from_json('test', True, {
 #         "title": "Password",
 #         "type": "string",
 #         "writeOnly": True,
@@ -77,7 +69,7 @@ def test_datetime_format():
 
 
 # def test_binary():
-#     field = StringParameters.from_json_field('test', True, {
+#     field = String.from_json('test', True, {
 #         "type": "string",
 #         "format": "binary",
 #         "contentMediaType": [
@@ -94,7 +86,7 @@ def test_datetime_format():
 
 
 def test_length():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "minLength": 1,
         "maxLength": 5
@@ -117,7 +109,7 @@ def test_length():
 
 
 def test_pattern():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "pattern": "^The",
         "default": "The "
@@ -143,7 +135,7 @@ def test_pattern():
 
 
 def test_enum():
-    field = StringParameters.from_json_field('test', True, {
+    field = String.from_json('test', True, {
         "type": "string",
         "enum": ['foo', 'bar']
     })
@@ -165,7 +157,7 @@ def test_enum():
 
 def test_unhandled_attribute():
     with pytest.raises(NotImplementedError) as exc:
-        StringParameters.from_json_field('test', True, {
+        String.from_json('test', True, {
             "type": "string",
             "unknown": ['foo', 'bar'],
             "pattern": "^f"
@@ -173,5 +165,5 @@ def test_unhandled_attribute():
 
     assert str(exc.value) == (
         "Unsupported attributes: {'unknown'} for "
-        "<class 'jsonschema_colander.types.StringParameters'>."
+        "<class 'jsonschema_colander.types.String'>."
     )

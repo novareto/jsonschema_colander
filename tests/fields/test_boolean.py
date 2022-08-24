@@ -1,10 +1,10 @@
 import hamcrest
 import colander
-from jsonschema_colander.types import BooleanParameters
+from jsonschema_colander.types import Boolean
 
 
 def test_boolean():
-    field = BooleanParameters.from_json_field('test', True, {
+    field = Boolean.from_json('test', True, {
         "type": "boolean",
         "default": "true"
     })
