@@ -11,4 +11,4 @@ def schema_fields(schema: JSONSchema,
     root = Object.from_json(
         None, False, schema,
         include=include, exclude=exclude)
-    return root.fields
+    return root

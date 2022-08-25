@@ -57,17 +57,22 @@ class JSONField(abc.ABC):
         """Returns the colander type needed for the schema node.
         """
 
+    def get_widget(self, factory, options):
+        return None
+
     def __call__(self):
         factory = self.get_factory()
         options = self.get_options()
-        return colander.SchemaNode(factory(), **options)
+        widget = self.get_widget(factory, options)
+        return colander.SchemaNode(factory(), widget=widget, **options)
 
     @classmethod
     def extract(cls, params: dict, available: set) -> Tuple[List, Dict]:
         return [], {}
 
     @classmethod
-    def from_json(cls, name: str, required: bool, params: dict):
+    def from_json(cls, params: dict,
+                  name: Optional[str] = None, required: bool = False):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
             raise NotImplementedError(

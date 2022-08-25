@@ -134,13 +134,17 @@ class Array(JSONField):
         elif self.subfield is None:
             raise NotImplementedError(
                 "Unsupported array type : 'items' attribute required.")
+        if 'choices' in self.attributes:
+            return colander.Set
         return colander.SequenceSchema
 
     def __call__(self):
         factory = self.get_factory()
         options = self.get_options()
-        return factory(self.subfield(), **options)
-
+        subfield = self.subfield()
+        if not subfield.name:
+            subfield.name = 'item'
+        return factory(subfield, **options)
 
     @classmethod
     def extract(cls, params: dict, available: set):
@@ -156,7 +160,8 @@ class Array(JSONField):
         return validators, attributes
 
     @classmethod
-    def from_json(cls, name: str, required: bool, params: dict):
+    def from_json(cls, params: dict,
+                  name: Optional[str] = None, required: bool = False):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
             raise NotImplementedError(
@@ -173,7 +178,7 @@ class Array(JSONField):
                     raise NotImplementedError('Missing definitions.')
                 items = definitions[ref.split('/')[-1]]
             subfield = converter.lookup(items['type']).from_json(
-                name, False, items
+                items, required=False
             )
         else:
             subfield = None
@@ -206,7 +211,7 @@ class Object(JSONField):
     def get_factory(self):
         if self.factory is not None:
             return self.factory
-        return colander.MappingSchema
+        return colander.Schema
 
     def get_options(self):
         # Object-types do not need root validators.
@@ -214,8 +219,8 @@ class Object(JSONField):
         return self.attributes
 
     def __call__(self):
-        factory = self.get_factory()
         options = self.get_options()
+        factory = self.get_factory()
         return factory(
             *[subfield() for subfield in self.fields.values()],
             **options
@@ -223,7 +228,9 @@ class Object(JSONField):
 
     @classmethod
     def from_json(
-            cls, name: str, required: bool, params: dict,
+            cls, params: dict,
+            name: Optional[str] = None,
+            required: bool = False,
             include: Optional[Iterable] = None,
             exclude: Optional[Iterable] = None
     ):
@@ -258,8 +265,9 @@ class Object(JSONField):
                 if 'definitions' in field.allowed:
                     definition['definitions'] = definitions
                 fields[property_name] = field.from_json(
-                    property_name,
-                    property_name in requirements, definition
+                    definition,
+                    name=property_name,
+                    required=property_name in requirements
                 )
             else:
                 raise NotImplementedError(
