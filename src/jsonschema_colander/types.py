@@ -7,13 +7,6 @@ from .validators import NumberRange
 from .converter import converter
 
 
-string_formats = {
-    'date': colander.Date,
-    'time': colander.Time,
-    'date-time': colander.DateTime,
-}
-
-
 @converter.register('string')
 class String(JSONField):
 
@@ -21,6 +14,21 @@ class String(JSONField):
     allowed = {
         'format', 'pattern', 'enum', 'minLength', 'maxLength',
         'writeOnly', 'default', 'contentMediaType', 'contentEncoding'
+    }
+
+    formats = {
+        'date': colander.Date,
+        'time': colander.Time,
+        'date-time': colander.DateTime,
+    }
+
+    validators = {
+        'email': [colander.Email()],
+        'uuid': [colander.uuid],
+        'url':  [colander.url]
+    }
+
+    widgets = {
     }
 
     def __init__(self, type, name, required, validators, attributes, **kwargs):
@@ -31,7 +39,11 @@ class String(JSONField):
     def get_factory(self):
         if self.factory is not None:
             return self.factory
-        return string_formats.get(self.format, colander.String)
+        return self.formats.get(self.format, colander.String)
+
+    def get_widget(self, factory, options):
+        if widget := self.widgets.get(self.format):
+            return widget
 
     @classmethod
     def extract(cls, params: dict, available: set):
@@ -58,7 +70,8 @@ class String(JSONField):
                     kw = attributes.get('render_kw', {})
                     kw['accept'] = ctype
                     attributes['render_kw'] = kw
-
+            elif format_validators := cls.validators.get(format):
+                validators.extend(format_validators)
         return validators, attributes
 
 
@@ -136,7 +149,8 @@ class EnumParameters(JSONField):
         return wtforms.fields.SelectField
 
     @classmethod
-    def from_json(cls, name: str, required: bool, params: dict):
+    def from_json(cls, params: dict,
+                  name: Optional[str] = None, required: bool = False):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
             raise NotImplementedError(
@@ -218,7 +232,7 @@ class Array(JSONField):
             else:
                 subtype = items['type']
 
-            subfield = converter.lookup(items['type']).from_json(
+            subfield = converter.lookup(subtype).from_json(
                 items, required=False
             )
         else:
