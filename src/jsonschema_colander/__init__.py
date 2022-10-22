@@ -8,7 +8,5 @@ JSONSchema = Dict
 def schema_fields(schema: JSONSchema,
                   include: Optional[Iterable[str]] = None,
                   exclude: Optional[Iterable[str]] = None):
-    root = Object.from_json(
-        None, False, schema,
-        include=include, exclude=exclude)
+    root = Object.from_json(schema, include=include, exclude=exclude)
     return root

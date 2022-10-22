@@ -115,6 +115,44 @@ class Boolean(JSONField):
         return colander.Boolean
 
 
+@converter.register('enum')
+class EnumParameters(JSONField):
+    supported = {'enum'}
+    allowed = {'enum'}
+
+    @classmethod
+    def extract(cls, params: dict, available: set):
+        validators = []
+        attributes = {
+            'choices': [(v, v) for v in params['enum']]
+        }
+        if 'default' in available:
+            attributes['default'] = params['default']
+        return validators, attributes
+
+    def get_factory(self):
+        if self.factory is not None:
+            return self.factory
+        return wtforms.fields.SelectField
+
+    @classmethod
+    def from_json(cls, name: str, required: bool, params: dict):
+        available = set(params.keys())
+        if illegal := ((available - cls.ignore) - cls.allowed):
+            raise NotImplementedError(
+                f'Unsupported attributes: {illegal} for {cls}.')
+        validators, attributes = cls.extract(params, available)
+        return cls(
+            'enum',
+            name,
+            required,
+            validators,
+            attributes,
+            label=params.get('title'),
+            description=params.get('description')
+        )
+
+
 @converter.register('array')
 class Array(JSONField):
 
@@ -168,15 +206,18 @@ class Array(JSONField):
                 f'Unsupported attributes for array type: {illegal}')
 
         validators, attributes = cls.extract(params, available)
-        if 'enum' in available:
-            attributes['choices'] = [(v, v) for v in params['enum']]
-
         if 'items' in available and (items := params['items']):
             if ref := items.get('$ref'):
                 definitions = params.get('definitions')
                 if not definitions:
                     raise NotImplementedError('Missing definitions.')
                 items = definitions[ref.split('/')[-1]]
+
+            if 'enum' in items:
+                subtype = 'enum'
+            else:
+                subtype = items['type']
+
             subfield = converter.lookup(items['type']).from_json(
                 items, required=False
             )
@@ -241,7 +282,7 @@ class Object(JSONField):
 
         properties = params.get('properties', None)
         if properties is None:
-            raise NotImplementedError("Missing properties.")
+            raise NotImplementedError(f"{name}: missing properties.")
 
         if include is None:
             include = set(properties.keys())
