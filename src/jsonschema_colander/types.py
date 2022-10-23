@@ -25,7 +25,7 @@ class String(JSONField):
     validators = {
         'email': [colander.Email()],
         'uuid': [colander.uuid],
-        'url':  [colander.url]
+        'url':  [colander.url]  # non-standard
     }
 
     widgets = {
