@@ -4,6 +4,26 @@ import colander
 from jsonschema_colander.types import String
 
 
+def test_string_config():
+    field = String.from_json({
+        "type": "string",
+    }, config={
+        '': {
+            'validators': [colander.url]
+        }
+    })
+    assert field.get_factory() == colander.String
+    assert field.validators == [colander.url]
+
+
+def test_string_format():
+    field = String.from_json({
+        "type": "string",
+        "format": "email"
+    }, required=True, name='test')
+    assert field.get_factory() == colander.String
+
+
 def test_email_format():
     field = String.from_json({
         "type": "string",

@@ -5,11 +5,29 @@ from types import MappingProxyType
 import typing as t
 
 
-@colander.deferred
-def deferred_missing(node, kw):
-    if data := kw.get('data'):
-        return data[field.name]
-    return colander.drop
+class Path(str):
+
+    fragments: t.Sequence[str]
+
+    def __new__(cls, value: t.Union[str, 'Path']):
+        if isinstance(value, Path):
+            return value  # idempotency
+        string = super().__new__(cls, value)
+        string.fragments = string.split('.')
+        return string
+
+    def resolve(self, node: t.Mapping[str, t.Any]) -> t.Any:
+        for stub in self.fragments:
+           node = node[stub]
+        return node
+
+    @colander.deferred
+    def missing(self, node, kw):
+        """in order to work, you need to bind the schema with 'data'.
+        'data' being the equivalent of the appstruct.
+        """
+        if data := kw.get('data'):
+            return self.resolve(data)
 
 
 class DefinitionsHolder:
@@ -41,6 +59,7 @@ class JSONField(abc.ABC):
                  required: bool,
                  validators: t.List,
                  attributes: t.Dict,
+                 *,
                  label: str = '',
                  description: str = '',
                  config: t.Optional[t.Mapping] = None,
@@ -50,7 +69,12 @@ class JSONField(abc.ABC):
             raise TypeError(
                 f'{self.__class__} does not support the {type} type.')
 
-        self.config = config if config is not None else MappingProxyType({})
+        if config is None:
+            config = MappingProxyType({})
+        elif not isinstance(config, MappingProxyType):
+            config = MappingProxyType(config)
+
+        self.config = config
         self.type = type
         self.name = name
         self.label = label or name
@@ -67,18 +91,16 @@ class JSONField(abc.ABC):
         return MappingProxyType(self.config.get(self.__path__, {}))
 
     @cached_property
-    def __path__(self) -> str:
+    def __path__(self) -> Path:
         if self.parent is None:
-            self.__path__ = self.name or ""
-        elif self.name:
+            return Path(self.name or "")
+        if self.name:
             if self.parent.__path__:
-                self.__path__ = f'{self.parent._path__}.{name}'
-            else:
-                self.__path__ = self.name
-        elif self.parent.__path__:
-            self.__path__ = self.parent.__path__
-        else:
-            raise NameError('Unnamed field with no parent.')
+                return Path(f'{self.parent._path__}.{name}')
+            return Path(self.name)
+        if self.parent.__path__:
+            return Path(self.parent.__path__)
+        raise NameError('Unnamed field with no parent.')
 
     def get_definitions(self, node):
         while node is not None:
@@ -87,9 +109,10 @@ class JSONField(abc.ABC):
         return {}
 
     def get_options(self):
+
         if not self.required:
             if self.fieldconf.get('readonly'):
-                missing = deferred_missing
+                missing = self.__path__.missing
             else:
                 missing = colander.drop
         else:
