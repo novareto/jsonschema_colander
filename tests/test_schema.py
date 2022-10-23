@@ -11,9 +11,7 @@ They are created just like any other field.
 
 def test_standalone_schema(person_schema):
 
-    schema = jsonschema_colander.types.Object.from_json(
-        None, False, person_schema
-    )
+    schema = jsonschema_colander.types.Object.from_json(person_schema)
 
     hamcrest.assert_that(schema.fields, hamcrest.has_entries({
         "firstName": hamcrest.instance_of(

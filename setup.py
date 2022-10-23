@@ -6,7 +6,7 @@ setup(
     install_requires=[
         'colander>=1.8',
         'jsonschema',
-        'jsonref'
+        'unflatten'
     ],
     extras_require={
         'test': [

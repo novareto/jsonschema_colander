@@ -6,10 +6,10 @@ from jsonschema_colander.types import Number
 
 
 def test_max():
-    field = Number.from_json('test', True, {
+    field = Number.from_json({
         "type": "integer",
         "maximum": 20
-    })
+    }, name='test', required=True)
 
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({
@@ -31,11 +31,11 @@ def test_max():
 
 
 def test_min():
-    field = Number.from_json('test', True, {
+    field = Number.from_json({
         "type": "number",
         "minimum": 2.99,
         "default": 5.0
-    })
+    }, name='test', required=True)
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({
         'validator': hamcrest.instance_of(
@@ -57,11 +57,11 @@ def test_min():
 
 def test_exclusive_minmax():
 
-    field = Number.from_json('test', True, {
+    field = Number.from_json({
         "type": "integer",
         "exclusiveMinimum": 2,
         "exclusiveMaximum": 15
-    })
+    }, name='test', required=True)
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({
         'validator': hamcrest.instance_of(
@@ -93,21 +93,3 @@ def test_exclusive_minmax():
         'test': '15 is greater than maximum value 15'}
 
     assert schema.deserialize(10) == 10
-
-
-# def test_enum():
-#     field = Number.from_json('test', True, {
-#         "type": "integer",
-#         "enum": [1, 2]
-#     })
-
-#     assert field.required is True
-#     assert field.get_factory() == wtforms.fields.SelectField
-#     form = wtforms.form.BaseForm({"test": field()})
-#     form.process(data={'test': 9})
-#     assert form.validate() is False
-#     assert form.errors == {'test': ['Not a valid choice.']}
-
-#     form.process(data={'test': 1})
-#     assert form.validate() is True
-#     assert not form.errors

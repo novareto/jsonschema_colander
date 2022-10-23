@@ -1,8 +1,8 @@
 import re
 import colander
 from functools import partial
-from typing import Optional, Dict, ClassVar, Type, Iterable
-from .meta import JSONField
+from typing import Optional, Dict, ClassVar, Type, Iterable, Mapping
+from .meta import JSONField, DefinitionsHolder
 from .validators import NumberRange
 from .converter import converter
 
@@ -31,10 +31,9 @@ class String(JSONField):
     widgets = {
     }
 
-    def __init__(self, type, name, required, validators, attributes, **kwargs):
-        self.format = attributes.pop('format', 'default')
-        super().__init__(
-            type, name, required, validators, attributes, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.format = self.attributes.pop('format', 'default')
 
     def get_factory(self):
         if self.factory is not None:
@@ -46,7 +45,7 @@ class String(JSONField):
             return widget
 
     @classmethod
-    def extract(cls, params: dict, available: set):
+    def extract(cls, params: Mapping, available: set):
         validators = []
         attributes = {}
         if {'minLength', 'maxLength'} & available:
@@ -94,7 +93,7 @@ class Number(JSONField):
         return colander.Float
 
     @classmethod
-    def extract(cls, params: dict, available: set):
+    def extract(cls, params: Mapping, available: set):
         validators = []
         attributes = {}
         if default := params.get('default'):
@@ -117,7 +116,7 @@ class Boolean(JSONField):
     supported = {'boolean'}
 
     @classmethod
-    def extract(cls, params: dict, available: set):
+    def extract(cls, params: Mapping, available: set):
         if 'default' in available:
             return [], {'default': params['default']}
         return [], {}
@@ -134,7 +133,7 @@ class EnumParameters(JSONField):
     allowed = {'enum'}
 
     @classmethod
-    def extract(cls, params: dict, available: set):
+    def extract(cls, params: Mapping, available: set):
         validators = []
         attributes = {
             'choices': [(v, v) for v in params['enum']]
@@ -149,8 +148,12 @@ class EnumParameters(JSONField):
         return wtforms.fields.SelectField
 
     @classmethod
-    def from_json(cls, params: dict,
-                  name: Optional[str] = None, required: bool = False):
+    def from_json(cls,
+                  params: Mapping,
+                  parent: Optional['JSONField'] = None,
+                  config: Optional[Mapping] = None,
+                  name: Optional[str] = None,
+                  required: bool = False):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
             raise NotImplementedError(
@@ -162,7 +165,9 @@ class EnumParameters(JSONField):
             required,
             validators,
             attributes,
+            parent=parant,
             label=params.get('title'),
+            config=config,
             description=params.get('description')
         )
 
@@ -177,8 +182,8 @@ class Array(JSONField):
     subfield: Optional[JSONField] = None
 
     def __init__(self, *args, subfield=None, **kwargs):
-        super().__init__(*args, **kwargs)
         self.subfield = subfield
+        super().__init__(*args, **kwargs)
 
     def get_factory(self):
         if self.factory is not None:
@@ -199,7 +204,7 @@ class Array(JSONField):
         return factory(subfield, **options)
 
     @classmethod
-    def extract(cls, params: dict, available: set):
+    def extract(cls, params: Mapping, available: set):
         attributes = {}
         validators = []
         if {'minItems', 'maxItems'} & available:
@@ -211,67 +216,54 @@ class Array(JSONField):
             attributes['default'] = params['default']
         return validators, attributes
 
-    @classmethod
-    def from_json(cls, params: dict,
-                  name: Optional[str] = None, required: bool = False):
-        available = set(params.keys())
-        if illegal := ((available - cls.ignore) - cls.allowed):
-            raise NotImplementedError(
-                f'Unsupported attributes for array type: {illegal}')
+    def set_items(self, items):
+        if not items:
+            self.subfield = None
+            return
 
-        validators, attributes = cls.extract(params, available)
-        if 'items' in available and (items := params['items']):
-            if ref := items.get('$ref'):
-                definitions = params.get('definitions')
-                if not definitions:
-                    raise NotImplementedError('Missing definitions.')
-                items = definitions[ref.split('/')[-1]]
+        if ref := items.get('$ref'):
+            definitions = self.get_definitions(self.parent)
+            if not definitions:
+                raise NotImplementedError('Missing definitions.')
+            items = definitions[ref.split('/')[-1]]
 
-            if 'enum' in items:
-                subtype = 'enum'
-            else:
-                subtype = items['type']
-
-            subfield = converter.lookup(subtype).from_json(
-                items, required=False
-            )
+        if 'enum' in items:
+            subtype = 'enum'
         else:
-            subfield = None
-        return cls(
-            params['type'],
-            name,
-            required,
-            validators,
-            attributes,
-            subfield=subfield,
-            label=params.get('title'),
-            description=params.get('description')
+            subtype = items['type']
+
+        self.subfield = converter.lookup(subtype).from_json(
+            items,
+            name='items',
+            required=False,
+            parent=self.parent,
+            config=self.config
         )
+
+    @classmethod
+    def from_json(cls, params: Mapping, **kwargs):
+        node = super().from_json(params, **kwargs)
+        inherited = node.get_definitions(node.parent)
+        node.set_items(params.get('items'))
+        return node
 
 
 @converter.register('object')
-class Object(JSONField):
+class Object(JSONField, DefinitionsHolder):
 
     ignore = JSONField.ignore | {
         '$id', 'id', '$schema', '$comment'
     }
     supported = {'object'}
     allowed = {'required', 'properties', 'definitions'}
-    fields: Dict[str, JSONField]
 
-    def __init__(self, fields, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields = fields
+    fields: Optional[Dict[str, JSONField]] = None
+    definitions: Optional[Dict] = None
 
     def get_factory(self):
         if self.factory is not None:
             return self.factory
         return colander.Schema
-
-    def get_options(self):
-        # Object-types do not need root validators.
-        # Validation is handled at field level.
-        return self.attributes
 
     def __call__(self):
         options = self.get_options()
@@ -281,64 +273,43 @@ class Object(JSONField):
             **options
         )
 
-    @classmethod
-    def from_json(
-            cls, params: dict,
-            name: Optional[str] = None,
-            required: bool = False,
-            include: Optional[Iterable] = None,
-            exclude: Optional[Iterable] = None
-    ):
-        available = set(params.keys())
-        if illegal := ((available - cls.ignore) - cls.allowed):
-            raise NotImplementedError(
-                f'Unsupported attributes for string type: {illegal}')
-
-        properties = params.get('properties', None)
-        if properties is None:
-            raise NotImplementedError(f"{name}: missing properties.")
-
-        if include is None:
-            include = set(properties.keys())
-        else:
-            include = set(include)  # idempotent
-        if exclude is not None:
-            include = include - set(exclude)
-
-        requirements = params.get('required', [])
+    def set_fields(self, properties, requirements):
         fields = {}
-        definitions = params.get('definitions', {})
+        if includes := self.fieldconf.get('include'):
+            include = set(includes)
+        else:
+            include = set(properties.keys())
+        if exclude := self.fieldconf.get('exclude'):
+            include = include - set(exclude)
         for property_name, definition in properties.items():
             if property_name not in include:
                 continue
             if ref := definition.get('$ref'):
-                if not definitions:
+                if not self.definitions:
                     raise NotImplementedError('Missing definitions.')
-                definition = definitions[ref.split('/')[-1]]
+                definition = self.definitions[ref.split('/')[-1]]
             if type_ := definition.get('type', None):
                 field = converter.lookup(type_)
-                if 'definitions' in field.allowed:
-                    definition['definitions'] = definitions
                 fields[property_name] = field.from_json(
                     definition,
                     name=property_name,
-                    required=property_name in requirements
+                    required=property_name in requirements,
+                    parent=self,
+                    config=self.config,
                 )
             else:
                 raise NotImplementedError(
                     f'Undefined type for property {property_name}'
                 )
-        validators, attributes = cls.extract(params, available)
-        if validators:
-            raise NotImplementedError(
-                "Object-types can't have root validators")
-        return cls(
-            fields,
-            params['type'],
-            name,
-            required,
-            validators,
-            attributes,
-            label=params.get('title'),
-            description=params.get('description')
+        self.fields = fields
+
+    @classmethod
+    def from_json(cls, params: Mapping, **kwargs):
+        node = super().from_json(params, **kwargs)
+        inherited = node.get_definitions(node.parent)
+        node.definitions = inherited | params.get('definitions', {})
+        node.set_fields(
+            params.get('properties', {}),
+            params.get('required', []),
         )
+        return node

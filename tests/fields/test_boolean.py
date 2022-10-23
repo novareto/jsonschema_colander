@@ -4,10 +4,10 @@ from jsonschema_colander.types import Boolean
 
 
 def test_boolean():
-    field = Boolean.from_json('test', True, {
+    field = Boolean.from_json({
         "type": "boolean",
         "default": "true"
-    })
+    }, name='test', required=True)
 
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({

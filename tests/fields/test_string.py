@@ -5,34 +5,34 @@ from jsonschema_colander.types import String
 
 
 def test_email_format():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "format": "email"
-    })
+    }, required=True, name='test')
     assert field.get_factory() == colander.String
 
 
 def test_date_format():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "format": "date"
-    })
+    }, name='test', required=True)
     assert field.get_factory() == colander.Date
 
 
 def test_time_format():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "format": "time"
-    })
+    }, name='test', required=True)
     assert field.get_factory() == colander.Time
 
 
 def test_datetime_format():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "format": "date-time"
-    })
+    }, name='test', required=True)
     assert field.get_factory() == colander.DateTime
 
 
@@ -86,11 +86,11 @@ def test_datetime_format():
 
 
 def test_length():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "minLength": 1,
         "maxLength": 5
-    })
+    }, name='test', required=True)
 
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({
@@ -109,11 +109,11 @@ def test_length():
 
 
 def test_pattern():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "pattern": "^The",
         "default": "The "
-    })
+    }, name='test', required=True)
 
     constraints = field.get_options()
     hamcrest.assert_that(constraints, hamcrest.has_entries({
@@ -135,17 +135,10 @@ def test_pattern():
 
 
 def test_enum():
-    field = String.from_json('test', True, {
+    field = String.from_json({
         "type": "string",
         "enum": ['foo', 'bar']
-    })
-
-    # constraints = field.get_options()
-    # hamcrest.assert_that(constraints, hamcrest.has_entries({
-    #     'validators': hamcrest.contains_exactly(
-    #         hamcrest.instance_of(wtforms.validators.DataRequired),
-    #     ),
-    # }))
+    }, name='test', required=True)
 
     assert field.required is True
     assert field.get_factory() == colander.String
@@ -157,11 +150,11 @@ def test_enum():
 
 def test_unhandled_attribute():
     with pytest.raises(NotImplementedError) as exc:
-        String.from_json('test', True, {
+        String.from_json({
             "type": "string",
             "unknown": ['foo', 'bar'],
             "pattern": "^f"
-        })
+        }, name='test', required=True)
 
     assert str(exc.value) == (
         "Unsupported attributes: {'unknown'} for "
