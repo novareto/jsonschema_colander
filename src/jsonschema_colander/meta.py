@@ -4,6 +4,14 @@ from functools import cached_property
 from types import MappingProxyType
 import typing as t
 
+try:
+    from deform.schema import default_widget_makers
+    READONLY_WIDGET = True
+
+except:
+    default_widget_makers = {}
+    READONLY_WIDGET = False
+
 
 class Path(str):
 
@@ -29,6 +37,18 @@ class Path(str):
         if data := kw.get('data'):
             return self.resolve(data)
 
+    @classmethod
+    def create(cls, parent, name: str):
+        if parent is None:
+            return cls(name or "")
+        if name:
+            if parent.__path__:
+                return cls(f'{parent.__path__}.{name}')
+            return cls(name)
+        if parent.__path__:
+            return cls(parent.__path__)
+        raise NameError('Unnamed field with no parent.')
+
 
 class DefinitionsHolder:
     definitions: t.Optional[t.Mapping]
@@ -48,6 +68,7 @@ class JSONField(abc.ABC):
     validators: t.List
     attributes: t.Dict
     required: bool
+    readonly: bool
     __path__: str
     parent: t.Optional['JSONField'] = None
     factory: t.Optional[t.Callable] = None
@@ -69,38 +90,27 @@ class JSONField(abc.ABC):
             raise TypeError(
                 f'{self.__class__} does not support the {type} type.')
 
+        self.__path__ = Path.create(parent, name)
+
         if config is None:
             config = MappingProxyType({})
         elif not isinstance(config, MappingProxyType):
             config = MappingProxyType(config)
 
         self.config = config
+        self.fieldconf = MappingProxyType(self.config.get(self.__path__, {}))
+
         self.type = type
         self.name = name
         self.label = label or name
         self.description = description
         self.required = required
+        self.readonly = self.fieldconf.get('readonly', False)
         self.validators = validators
         if validators := self.fieldconf.get('validators'):
             self.validators.extend(validators)
         self.attributes = attributes
         self.parent = parent
-
-    @cached_property
-    def fieldconf(self) -> t.Mapping:
-        return MappingProxyType(self.config.get(self.__path__, {}))
-
-    @cached_property
-    def __path__(self) -> Path:
-        if self.parent is None:
-            return Path(self.name or "")
-        if self.name:
-            if self.parent.__path__:
-                return Path(f'{self.parent._path__}.{name}')
-            return Path(self.name)
-        if self.parent.__path__:
-            return Path(self.parent.__path__)
-        raise NameError('Unnamed field with no parent.')
 
     def get_definitions(self, node):
         while node is not None:
@@ -109,9 +119,8 @@ class JSONField(abc.ABC):
         return {}
 
     def get_options(self):
-
         if not self.required:
-            if self.fieldconf.get('readonly'):
+            if self.readonly:
                 missing = self.__path__.missing
             else:
                 missing = colander.drop
@@ -135,8 +144,13 @@ class JSONField(abc.ABC):
     def get_factory(self):
         """Returns the colander type needed for the schema node.
         """
+        pass
 
     def get_widget(self, factory, options):
+        if widget := default_widget_makers.get(factory):
+            if READONLY_WIDGET:
+                return widget(readonly=self.readonly)
+            return widget()
         return None
 
     def __call__(self):

@@ -2,7 +2,7 @@ import re
 import colander
 from functools import partial
 from typing import Optional, Dict, ClassVar, Type, Iterable, Mapping
-from .meta import JSONField, DefinitionsHolder
+from .meta import JSONField, DefinitionsHolder, READONLY_WIDGET
 from .validators import NumberRange
 from .converter import converter
 
@@ -41,8 +41,13 @@ class String(JSONField):
         return self.formats.get(self.format, colander.String)
 
     def get_widget(self, factory, options):
+        """Format superseedes classical node widget.
+        """
         if widget := self.widgets.get(self.format):
-            return widget
+            if READONLY_WIDGET:
+                return widget(readonly=self.readonly)
+            return widget()
+        return super().get_widget(factory, options)
 
     @classmethod
     def extract(cls, params: Mapping, available: set):
