@@ -178,7 +178,7 @@ class EnumParameters(JSONField):
             required,
             validators,
             attributes,
-            parent=parant,
+            parent=parent,
             label=params.get('title'),
             config=config,
             description=params.get('description')
