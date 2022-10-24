@@ -211,7 +211,7 @@ class Array(JSONField):
             items = definitions[ref.split('/')[-1]]
 
         if 'enum' in items:
-            self.attributes['choices'] = [(v, v) for v in params['enum']]
+            self.attributes['choices'] = [(v, v) for v in items['enum']]
         else:
             subtype = items['type']
             self.subfield = converter.lookup(subtype).from_json(
