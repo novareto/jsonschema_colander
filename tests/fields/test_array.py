@@ -5,9 +5,9 @@ from jsonschema_colander.types import Array
 
 def test_array_without_items():
 
-    field = Array.from_json('test', True, {
+    field = Array.from_json({
         "type": "array",
-    })
+    }, name='test', required=True)
 
     with pytest.raises(NotImplementedError) as exc:
         field.get_factory()
@@ -18,12 +18,12 @@ def test_array_without_items():
 
 def test_simple_array():
 
-    field = Array.from_json('test', True, {
+    field = Array.from_json({
         "type": "array",
         "items": {
             "type": "number"
         }
-    })
+    }, name='test', required=True)
 
     factory = field.get_factory()
     assert factory == colander.SequenceSchema
@@ -31,14 +31,14 @@ def test_simple_array():
 
 def test_array_length():
 
-    field = Array.from_json('test', True, {
+    field = Array.from_json({
         "type": "array",
         "minItems": 2,
         "maxItems": 3,
         "items": {
             "type": "number"
         }
-    })
+    }, name='test', required=True)
 
     schema = field()
     schema.deserialize([1, 2, 3])
@@ -49,7 +49,7 @@ def test_array_length():
 
 def test_complex_array():
 
-    field = Array.from_json('test', False, {
+    field = Array.from_json({
         "type": "array",
         "default": [[1]],
         "items": {
@@ -58,7 +58,7 @@ def test_complex_array():
                 "type": "number"
             }
         }
-    })
+    }, name='test')
 
     field.get_factory() == 1
     schema = field()
@@ -67,7 +67,7 @@ def test_complex_array():
 
 def test_complex_array_of_objects():
 
-    field = Array.from_json('test', True, {
+    field = Array.from_json({
         "type": "array",
         "items": {
             "type": "object",
@@ -90,7 +90,7 @@ def test_complex_array_of_objects():
                 }
             }
         }
-    })
+    }, name='test', required=True)
 
     factory = field.get_factory()
     assert factory == colander.SequenceSchema
@@ -102,7 +102,7 @@ def test_complex_array_of_objects():
 
 
 def test_files_array():
-    field = Array.from_json('test', True, {
+    field = Array.from_json( {
         "type": "array",
         "items": {
             "type": "string",
@@ -114,7 +114,7 @@ def test_files_array():
             ]
         },
         "title": "Some images."
-    })
+    }, name='test', required=True)
 
     schema = field()
     schema.deserialize([])

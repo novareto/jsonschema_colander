@@ -5,12 +5,14 @@ from jsonschema_colander.types import Object
 
 def test_object():
 
-    with pytest.raises(NotImplementedError):
-        field = Object.from_json('test', True, {
-            "type": "object",
-        })
+    field = Object.from_json({
+        "type": "object",
+    })
+    factory = field.get_factory()
+    assert factory == colander.Schema
 
-    field = Object.from_json('test', True, {
+
+    field = Object.from_json({
         "type": "object",
         "properties": {
             "fruits": {
@@ -20,14 +22,14 @@ def test_object():
                 }
             }
         }
-    })
+    }, name='test', required=True)
 
     factory = field.get_factory()
     assert factory == colander.Schema
 
 
 def test_ref_object():
-    root_field = Object.from_json('test', True, {
+    root_field = Object.from_json({
         "type": "object",
         "properties": {
             "name": {
@@ -90,7 +92,7 @@ def test_ref_object():
                 ]
             }
         }
-    })
+    }, name='test', required=True)
     assert root_field.label == 'test'
     assert not root_field.description
     addr = root_field.fields['address']
