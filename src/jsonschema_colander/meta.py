@@ -7,8 +7,7 @@ import typing as t
 try:
     from deform.schema import default_widget_makers
     READONLY_WIDGET = True
-
-except:
+except ImportError:
     default_widget_makers = {}
     READONLY_WIDGET = False
 
@@ -29,13 +28,18 @@ class Path(str):
            node = node[stub]
         return node
 
-    @colander.deferred
-    def missing(self, node, kw):
-        """in order to work, you need to bind the schema with 'data'.
-        'data' being the equivalent of the appstruct.
-        """
-        if data := kw.get('data'):
-            return self.resolve(data)
+    def missing(self):
+        @colander.deferred
+        def deferred_missing(node, kw):
+            """in order to work, you need to bind the schema with 'data'.
+            'data' being the equivalent of the appstruct.
+            """
+            if data := kw.get('data'):
+                try:
+                    return self.resolve(data)
+                except KeyError:
+                    return None
+        return deferred_missing
 
     @classmethod
     def create(cls, parent, name: str):
@@ -121,7 +125,7 @@ class JSONField(abc.ABC):
     def get_options(self):
         if not self.required:
             if self.readonly:
-                missing = self.__path__.missing
+                missing = self.__path__.missing()
             else:
                 missing = colander.drop
         else:

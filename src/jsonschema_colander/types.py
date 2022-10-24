@@ -7,6 +7,15 @@ from .validators import NumberRange
 from .converter import converter
 
 
+try:
+    import deform.widget
+    string_widgets = {
+        "password": deform.widget.PasswordWidget
+    }
+except ImportError:
+    string_widgets = {}
+
+
 @converter.register('string')
 class String(JSONField):
 
@@ -28,8 +37,7 @@ class String(JSONField):
         'url':  [colander.url]  # non-standard
     }
 
-    widgets = {
-    }
+    widgets = string_widgets
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -270,12 +278,12 @@ class Object(JSONField, DefinitionsHolder):
             return self.factory
         return colander.Schema
 
-    def __call__(self):
+    def __call__(self, **kwargs):
         options = self.get_options()
         factory = self.get_factory()
         return factory(
             *[subfield() for subfield in self.fields.values()],
-            **options
+            **(options | kwargs)
         )
 
     def set_fields(self, properties, requirements):
