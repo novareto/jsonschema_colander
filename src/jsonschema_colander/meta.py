@@ -6,6 +6,7 @@ import typing as t
 
 try:
     from deform.schema import default_widget_makers
+    select_widget = deform.widget.SelectWidget
     READONLY_WIDGET = True
 except ImportError:
     default_widget_makers = {}

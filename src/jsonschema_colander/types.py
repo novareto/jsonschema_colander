@@ -12,8 +12,14 @@ try:
     string_widgets = {
         "password": deform.widget.PasswordWidget
     }
+    enum_widgets = {
+        colander.String: deform.widget.SelectWidget,
+        colander.Set: deform.widget.CheckboxChoiceWidget,
+    }
 except ImportError:
     string_widgets = {}
+    enum_widgets = {
+    }
 
 
 @converter.register('string')
@@ -51,7 +57,10 @@ class String(JSONField):
     def get_widget(self, factory, options):
         """Format superseedes classical node widget.
         """
-        if widget := self.widgets.get(self.format):
+        if 'choices' in self.attributes:
+            if widget := enum_widgets.get(factory):
+                return widget(values=self.attributes['choices'])
+        elif widget := self.widgets.get(self.format):
             if READONLY_WIDGET:
                 return widget(readonly=self.readonly)
             return widget()
@@ -140,57 +149,12 @@ class Boolean(JSONField):
         return colander.Boolean
 
 
-@converter.register('enum')
-class EnumParameters(JSONField):
-    supported = {'enum'}
-    allowed = {'enum'}
-
-    @classmethod
-    def extract(cls, params: Mapping, available: set):
-        validators = []
-        attributes = {
-            'choices': [(v, v) for v in params['enum']]
-        }
-        if 'default' in available:
-            attributes['default'] = params['default']
-        return validators, attributes
-
-    def get_factory(self):
-        if self.factory is not None:
-            return self.factory
-        return wtforms.fields.SelectField
-
-    @classmethod
-    def from_json(cls,
-                  params: Mapping,
-                  parent: Optional['JSONField'] = None,
-                  config: Optional[Mapping] = None,
-                  name: Optional[str] = None,
-                  required: bool = False):
-        available = set(params.keys())
-        if illegal := ((available - cls.ignore) - cls.allowed):
-            raise NotImplementedError(
-                f'Unsupported attributes: {illegal} for {cls}.')
-        validators, attributes = cls.extract(params, available)
-        return cls(
-            'enum',
-            name,
-            required,
-            validators,
-            attributes,
-            parent=parent,
-            label=params.get('title'),
-            config=config,
-            description=params.get('description')
-        )
-
-
 @converter.register('array')
 class Array(JSONField):
 
     supported = {'array'}
     allowed = {
-        'enum', 'items', 'minItems', 'maxItems', 'default', 'definitions'
+        'items', 'minItems', 'maxItems', 'default', 'definitions'
     }
     subfield: Optional[JSONField] = None
 
@@ -202,11 +166,17 @@ class Array(JSONField):
         if self.factory is not None:
             return self.factory
         elif self.subfield is None:
+            if 'choices' in self.attributes:
+                return colander.Set
             raise NotImplementedError(
                 "Unsupported array type : 'items' attribute required.")
-        if 'choices' in self.attributes:
-            return colander.Set
         return colander.SequenceSchema
+
+    def get_widget(self, factory, options):
+        if 'choices' in self.attributes:
+            if widget := enum_widgets.get(factory):
+                return widget(values=self.attributes['choices'])
+        return super().get_widget(factory, options)
 
     def __call__(self):
         factory = self.get_factory()
@@ -241,17 +211,16 @@ class Array(JSONField):
             items = definitions[ref.split('/')[-1]]
 
         if 'enum' in items:
-            subtype = 'enum'
+            self.attributes['choices'] = [(v, v) for v in params['enum']]
         else:
             subtype = items['type']
-
-        self.subfield = converter.lookup(subtype).from_json(
-            items,
-            name='items',
-            required=False,
-            parent=self.parent,
-            config=self.config
-        )
+            self.subfield = converter.lookup(subtype).from_json(
+                items,
+                name='items',
+                required=False,
+                parent=self.parent,
+                config=self.config
+            )
 
     @classmethod
     def from_json(cls, params: Mapping, **kwargs):
