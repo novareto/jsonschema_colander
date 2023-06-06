@@ -181,10 +181,13 @@ class Array(JSONField):
     def __call__(self):
         factory = self.get_factory()
         options = self.get_options()
-        subfield = self.subfield()
-        if not subfield.name:
-            subfield.name = 'item'
-        return factory(subfield, **options)
+        if self.subfield is not None:
+            subfield = self.subfield()
+            if not subfield.name:
+                subfield.name = 'item'
+            return factory(subfield, **options)
+        widget = self.get_widget(factory, options)
+        return colander.SchemaNode(factory(), widget=widget, **options)
 
     @classmethod
     def extract(cls, params: Mapping, available: set):
