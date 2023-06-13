@@ -42,3 +42,10 @@ def refs_and_defs_schema(request):
     path = pathlib.Path(__file__).parent / 'refs_defs.json'
     with path.open('r') as fp:
         return json.load(fp)
+
+
+@pytest.fixture(scope="session")
+def extended_validation_schema(request):
+    path = pathlib.Path(__file__).parent / 'extended_validation.json'
+    with path.open('r') as fp:
+        return json.load(fp)

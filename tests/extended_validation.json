@@ -1,0 +1,34 @@
+{
+    "type": "object",
+    "properties": {
+        "grund": {
+            "type": "string",
+            "enum": [
+                "Geschäftsaufgabe",
+                "Betriebsüberweisung an einen anderen Unfallversicherungsträger",
+                "AGrund"
+            ],
+            "format": "radio",
+            "title": "Warum möchten Sie die Versicherung kündigen?"
+        },
+        "grund2": {
+            "type": "string",
+            "format": "textarea",
+            "title": "Bitte geben Sie einen Grund für Ihre Kündigung an"
+        }
+    },
+    "dependentSchemas": {
+        "grund": {
+            "allOf": [
+                {
+                    "if": {
+                        "properties": {
+                            "grund": {"const": "AGrund"}
+                        }
+                    },
+                    "then": {"required": ["grund2"]}
+                }
+            ]
+        }
+    }
+}
