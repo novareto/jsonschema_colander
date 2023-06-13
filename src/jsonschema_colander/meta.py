@@ -71,6 +71,7 @@ class JSONField(abc.ABC):
         "if",
         "then",
         "dependentSchemas",
+        "allOf",
     }
     allowed: t.ClassVar[set] = {"default"}
 
@@ -192,7 +193,11 @@ class JSONField(abc.ABC):
 
         if dependentSchemas := params.get('dependentSchemas'):
             from .validators import JS_Schema_Validator
-            validators.append(JS_Schema_Validator(dependentSchemas))
+            validators.append(JS_Schema_Validator('dependentSchemas', dependentSchemas))
+
+        if allOf := params.get('allOf'):
+            from .validators import JS_Schema_Validator
+            validators.append(JS_Schema_Validator('allOf', allOf))
 
         return cls(
             params["type"],

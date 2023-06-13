@@ -45,8 +45,8 @@ class NumberRange(colander.Range):
 
 
 class JS_Schema_Validator(object):
-    def __init__(self, jsonschema):
-        self.jsonschema = {"type": "object", "dependentSchemas": jsonschema}
+    def __init__(self, key, jsonschema):
+        self.jsonschema = {"type": "object", key: jsonschema}
 
     def __call__(self, node, value, **kwargs):
         """Prevent duplicate usernames."""
@@ -55,5 +55,4 @@ class JS_Schema_Validator(object):
         try:
             validate(value, self.jsonschema)
         except ValidationError as e:
-            import pdb; pdb.set_trace()
             raise colander.Invalid(node, e.message)
