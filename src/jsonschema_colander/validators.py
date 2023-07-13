@@ -1,5 +1,6 @@
 import math
 import colander
+from jsonschema import validate, ValidationError
 
 
 class NumberRange(colander.Range):
@@ -44,15 +45,35 @@ class NumberRange(colander.Range):
                 )
 
 
-class JS_Schema_Validator(object):
+def node_json_traverser(node, stack):
+    if not stack:
+        return node
+    if children := getattr(node, 'children', None):
+        name, stack = stack[0], stack[1:]
+        if isinstance(name, str):
+            for child in children:
+                if child.name == name:
+                    return node_json_traverser(child, stack)
+        elif isinstance(name, int):
+            assert len(children) == 1
+            items = children[0]
+            assert items.name == 'items'
+            if not stack:
+                return node
+            return node_json_traverser(items, stack)
+
+    raise LookupError('Node not found')
+
+
+class JS_Schema_Validator:
+
     def __init__(self, key, jsonschema):
         self.jsonschema = {"type": "object", key: jsonschema}
 
     def __call__(self, node, value, **kwargs):
         """Prevent duplicate usernames."""
-        from jsonschema import validate, ValidationError
-
         try:
             validate(value, self.jsonschema)
         except ValidationError as e:
-            raise colander.Invalid(node, e.message)
+            error_node = node_json_traverser(node, e.path)
+            raise colander.Invalid(error_node, e.message)

@@ -1,8 +1,9 @@
 import abc
 import colander
+import typing as t
 from functools import cached_property
 from types import MappingProxyType
-import typing as t
+from .validators import JS_Schema_Validator
 
 try:
     from deform.schema import default_widget_makers
@@ -192,12 +193,12 @@ class JSONField(abc.ABC):
         validators, attributes = cls.extract(params, available)
 
         if dependentSchemas := params.get('dependentSchemas'):
-            from .validators import JS_Schema_Validator
-            validators.append(JS_Schema_Validator('dependentSchemas', dependentSchemas))
+            validators.append(
+                JS_Schema_Validator('dependentSchemas', dependentSchemas))
 
         if allOf := params.get('allOf'):
-            from .validators import JS_Schema_Validator
-            validators.append(JS_Schema_Validator('allOf', allOf))
+            validators.append(
+                JS_Schema_Validator('allOf', allOf))
 
         return cls(
             params["type"],
