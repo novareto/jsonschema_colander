@@ -65,6 +65,29 @@ def node_json_traverser(node, stack):
     raise LookupError('Node not found')
 
 
+def node_json_error(error, node, stack):
+    if not stack:
+        return error
+    if children := getattr(node, 'children', None):
+        name, stack = stack[0], stack[1:]
+        if isinstance(name, str):
+            for num, child in enumerate(children):
+                if child.name == name:
+                    suberror = colander.Invalid(child)
+                    error.add(suberror, num)
+                    return node_json_error(suberror, child, stack)
+        elif isinstance(name, int):
+            assert len(children) == 1
+            items = children[0]
+            assert items.name == 'items'
+            if not stack:
+                return error
+            return node_json_error(error, items, stack)
+
+    raise LookupError('Node not found')
+
+
+
 class JS_Schema_Validator:
 
     def __init__(self, key, jsonschema):
@@ -75,5 +98,7 @@ class JS_Schema_Validator:
         try:
             validate(value, self.jsonschema)
         except ValidationError as e:
-            error_node = node_json_traverser(node, e.path)
-            raise colander.Invalid(error_node, e.message)
+            base_error = colander.Invalid(node)
+            error = node_json_error(base_error, node, list(e.path))
+            error.msg = e.message
+            raise base_error
