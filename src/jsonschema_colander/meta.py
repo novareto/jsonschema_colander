@@ -109,7 +109,9 @@ class JSONField(abc.ABC):
         self.label = label or name
         self.description = description
         self.required = required
-        self.readonly = self.fieldconf.get('readonly', False)
+        self.readonly = self.fieldconf.get(
+            'readonly', self.config.get('readonly', False)
+        )
         self.validators = validators
         if validators := self.fieldconf.get('validators'):
             self.validators.extend(validators)
@@ -152,6 +154,8 @@ class JSONField(abc.ABC):
 
     def get_widget(self, factory, options):
         if widget := default_widget_makers.get(factory):
+            if isinstance(widget, colander.deferred):
+                return widget
             if READONLY_WIDGET:
                 return widget(readonly=self.readonly)
             return widget()

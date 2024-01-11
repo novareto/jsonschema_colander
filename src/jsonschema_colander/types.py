@@ -10,7 +10,8 @@ from .converter import converter
 try:
     import deform.widget
     string_widgets = {
-        "password": deform.widget.PasswordWidget
+        "password": deform.widget.PasswordWidget,
+        "textarea": deform.widget.TextAreaWidget
     }
     enum_widgets = {
         colander.String: deform.widget.SelectWidget,
@@ -18,8 +19,7 @@ try:
     }
 except ImportError:
     string_widgets = {}
-    enum_widgets = {
-    }
+    enum_widgets = {}
 
 
 @converter.register('string')
@@ -59,8 +59,15 @@ class String(JSONField):
         """
         if 'choices' in self.attributes:
             if widget := enum_widgets.get(factory):
-                return widget(values=self.attributes['choices'])
+                if isinstance(widget, colander.deferred):
+                    return widget
+                return widget(
+                    values=self.attributes['choices'],
+                    readonly=self.readonly
+                )
         elif widget := self.widgets.get(self.format):
+            if isinstance(widget, colander.deferred):
+                return widget
             if READONLY_WIDGET:
                 return widget(readonly=self.readonly)
             return widget()
@@ -175,7 +182,12 @@ class Array(JSONField):
     def get_widget(self, factory, options):
         if 'choices' in self.attributes:
             if widget := enum_widgets.get(factory):
-                return widget(values=self.attributes['choices'])
+                if isinstance(widget, colander.deferred):
+                    return widget
+                return widget(
+                    values=self.attributes['choices'],
+                    readonly=self.readonly
+                )
         return super().get_widget(factory, options)
 
     def __call__(self):
