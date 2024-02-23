@@ -154,7 +154,7 @@ class Array(JSONField):
 
     supported = {'array'}
     allowed = {
-        'items', 'minItems', 'maxItems', 'default', 'definitions', 'enum'
+        'items', 'minItems', 'maxItems', 'default', 'definitions', 'enum', 'format',
     }
     subfield: Optional[JSONField] = None
 
