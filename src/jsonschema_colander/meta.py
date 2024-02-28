@@ -148,6 +148,7 @@ class JSONField(abc.ABC):
             "title": self.label,
             "description": self.description,
             "missing": missing,
+#            "oid": self.name,
         }
         if len(self.validators) > 1:
             options["validator"] = colander.All(*self.validators)

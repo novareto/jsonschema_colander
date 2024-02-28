@@ -48,7 +48,7 @@ class NumberRange(colander.Range):
 def node_json_traverser(node, stack):
     if not stack:
         return node
-    if children := getattr(node, 'children', None):
+    if children := getattr(node, "children", None):
         name, stack = stack[0], stack[1:]
         if isinstance(name, str):
             for child in children:
@@ -57,18 +57,18 @@ def node_json_traverser(node, stack):
         elif isinstance(name, int):
             assert len(children) == 1
             items = children[0]
-            assert items.name == 'items'
+            assert items.name == "items"
             if not stack:
                 return node
             return node_json_traverser(items, stack)
 
-    raise LookupError('Node not found')
+    raise LookupError("Node not found")
 
 
 def node_json_error(error, node, stack):
     if not stack:
         return error
-    if children := getattr(node, 'children', None):
+    if children := getattr(node, "children", None):
         name, stack = stack[0], stack[1:]
         if isinstance(name, str):
             for num, child in enumerate(children):
@@ -79,17 +79,15 @@ def node_json_error(error, node, stack):
         elif isinstance(name, int):
             assert len(children) == 1
             items = children[0]
-            assert items.name == 'items'
+            assert items.name == "items"
             if not stack:
                 return error
             return node_json_error(error, items, stack)
 
-    raise LookupError('Node not found')
-
+    raise LookupError("Node not found")
 
 
 class JS_Schema_Validator:
-
     def __init__(self, key, jsonschema):
         self.jsonschema = {"type": "object", key: jsonschema}
 
@@ -99,6 +97,6 @@ class JS_Schema_Validator:
             validate(value, self.jsonschema)
         except ValidationError as e:
             base_error = colander.Invalid(node)
-            error = node_json_error(base_error, node, list(e.path))
+            error = node_json_error(base_error, node, list(e.path) or e.validator_value)
             error.msg = e.message
             raise base_error
