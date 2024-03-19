@@ -29,6 +29,20 @@ def test_simple_array():
     assert factory == colander.SequenceSchema
 
 
+def test_array_enum():
+
+    field = Array.from_json({
+        "type": "array",
+        "enum": [
+            "A",
+            "B"
+        ]
+    }, name='test', required=True)
+
+    factory = field.get_factory()
+    assert factory == colander.Set
+
+
 def test_array_length():
 
     field = Array.from_json({

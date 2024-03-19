@@ -1,0 +1,38 @@
+{
+    "type": "object",
+    "properties": {
+      "familienstand": {
+        "type": "string",
+        "enum": [
+          "ledig",
+          "verheiratet"
+        ],
+        "format": "radio",
+        "title": "Familienstand"
+      },
+      "anschrift-ehepartner": {
+        "type": "string",
+        "format": "textarea",
+        "title": "Name und Anschrift des Ehepartners"
+      }
+    },
+    "allOf": [
+      {
+        "if": {
+          "properties": {
+            "familienstand": {
+              "const": "verheiratet"
+            }
+          }
+        },
+        "then": {
+          "required": [
+            "anschrift-ehepartner"
+          ]
+        }
+      }
+    ],
+        "required": [
+      "familienstand"
+        ]
+}

@@ -161,7 +161,7 @@ class Array(JSONField):
 
     supported = {'array'}
     allowed = {
-        'items', 'minItems', 'maxItems', 'default', 'definitions'
+        'items', 'minItems', 'maxItems', 'default', 'definitions', 'enum', 'format',
     }
     subfield: Optional[JSONField] = None
 
@@ -210,6 +210,8 @@ class Array(JSONField):
                 min=params.get('minItems', -1),
                 max=params.get('maxItems', -1)
             ))
+        if 'enum' in available:
+            attributes['choices'] = [(v, v) for v in params['enum']]
         if 'default' in available:
             attributes['default'] = params['default']
         return validators, attributes

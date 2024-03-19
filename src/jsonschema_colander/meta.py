@@ -1,11 +1,13 @@
 import abc
 import colander
+import typing as t
 from functools import cached_property
 from types import MappingProxyType
-import typing as t
+from .validators import JS_Schema_Validator
 
 try:
     from deform.schema import default_widget_makers
+
     READONLY_WIDGET = True
 except ImportError:
     default_widget_makers = {}
@@ -16,16 +18,16 @@ class Path(str):
 
     fragments: t.Sequence[str]
 
-    def __new__(cls, value: t.Union[str, 'Path']):
+    def __new__(cls, value: t.Union[str, "Path"]):
         if isinstance(value, Path):
             return value  # idempotency
         string = super().__new__(cls, value)
-        string.fragments = string.split('.')
+        string.fragments = string.split(".")
         return string
 
     def resolve(self, node: t.Mapping[str, t.Any]) -> t.Any:
         for stub in self.fragments:
-           node = node[stub]
+            node = node[stub]
         return node
 
     def missing(self):
@@ -34,11 +36,12 @@ class Path(str):
             """in order to work, you need to bind the schema with 'data'.
             'data' being the equivalent of the appstruct.
             """
-            if data := kw.get('data'):
+            if data := kw.get("data"):
                 try:
                     return self.resolve(data)
                 except KeyError:
                     return None
+
         return deferred_missing
 
     @classmethod
@@ -47,11 +50,11 @@ class Path(str):
             return cls(name or "")
         if name:
             if parent.__path__:
-                return cls(f'{parent.__path__}.{name}')
+                return cls(f"{parent.__path__}.{name}")
             return cls(name)
         if parent.__path__:
             return cls(parent.__path__)
-        raise NameError('Unnamed field with no parent.')
+        raise NameError("Unnamed field with no parent.")
 
 
 class DefinitionsHolder:
@@ -61,9 +64,17 @@ class DefinitionsHolder:
 class JSONField(abc.ABC):
     supported: t.ClassVar[set]
     ignore: t.ClassVar[set] = {
-        'name', 'type', 'title', 'description', 'anyOf', 'if', 'then'
+        "name",
+        "type",
+        "title",
+        "description",
+        "anyOf",
+        "if",
+        "then",
+        "dependentSchemas",
+        "allOf",
     }
-    allowed: t.ClassVar[set] = {'default'}
+    allowed: t.ClassVar[set] = {"default"}
 
     type: str
     name: str
@@ -74,25 +85,25 @@ class JSONField(abc.ABC):
     required: bool
     readonly: bool
     __path__: str
-    parent: t.Optional['JSONField'] = None
+    parent: t.Optional["JSONField"] = None
     factory: t.Optional[t.Callable] = None
     config: t.Optional[t.Mapping] = None
 
-    def __init__(self,
-                 type: str,
-                 name: str,
-                 required: bool,
-                 validators: t.List,
-                 attributes: t.Dict,
-                 *,
-                 label: str = '',
-                 description: str = '',
-                 config: t.Optional[t.Mapping] = None,
-                 parent: t.Optional['JSONField'] = None
-                 ):
+    def __init__(
+        self,
+        type: str,
+        name: str,
+        required: bool,
+        validators: t.List,
+        attributes: t.Dict,
+        *,
+        label: str = "",
+        description: str = "",
+        config: t.Optional[t.Mapping] = None,
+        parent: t.Optional["JSONField"] = None,
+    ):
         if type not in self.supported:
-            raise TypeError(
-                f'{self.__class__} does not support the {type} type.')
+            raise TypeError(f"{self.__class__} does not support the {type} type.")
 
         self.__path__ = Path.create(parent, name)
 
@@ -113,7 +124,7 @@ class JSONField(abc.ABC):
             'readonly', self.config.get('readonly', False)
         )
         self.validators = validators
-        if validators := self.fieldconf.get('validators'):
+        if validators := self.fieldconf.get("validators"):
             self.validators.extend(validators)
         self.attributes = attributes
         self.parent = parent
@@ -135,21 +146,21 @@ class JSONField(abc.ABC):
 
         options = {
             **self.attributes,
-            'name': self.name,
-            'title': self.label,
-            'description': self.description,
-            'missing': missing
+            "name": self.name,
+            "title": self.label,
+            "description": self.description,
+            "missing": missing,
+#            "oid": self.name,
         }
         if len(self.validators) > 1:
-            options['validator'] = colander.All(*self.validators)
+            options["validator"] = colander.All(*self.validators)
         elif len(self.validators) == 1:
-            options['validator'] = self.validators[0]
+            options["validator"] = self.validators[0]
         return options
 
     @abc.abstractmethod
     def get_factory(self):
-        """Returns the colander type needed for the schema node.
-        """
+        """Returns the colander type needed for the schema node."""
         pass
 
     def get_widget(self, factory, options):
@@ -173,27 +184,35 @@ class JSONField(abc.ABC):
 
     @classmethod
     def from_json(
-            cls,
-            params: dict,
-            *,
-            parent: t.Optional['JSONField'] = None,
-            name: t.Optional[str] = None,
-            config: t.Optional[dict] = None,
-            required: bool = False
+        cls,
+        params: dict,
+        *,
+        parent: t.Optional["JSONField"] = None,
+        name: t.Optional[str] = None,
+        config: t.Optional[dict] = None,
+        required: bool = False,
     ):
         available = set(params.keys())
         if illegal := ((available - cls.ignore) - cls.allowed):
-            raise NotImplementedError(
-                f'Unsupported attributes: {illegal} for {cls}.')
+            raise NotImplementedError(f"Unsupported attributes: {illegal} for {cls}.")
         validators, attributes = cls.extract(params, available)
+
+        if dependentSchemas := params.get('dependentSchemas'):
+            validators.append(
+                JS_Schema_Validator('dependentSchemas', dependentSchemas))
+
+        if allOf := params.get('allOf'):
+            validators.append(
+                JS_Schema_Validator('allOf', allOf))
+
         return cls(
-            params['type'],
+            params["type"],
             name,
             required,
             validators,
             attributes,
             parent=parent,
             config=config,
-            label=params.get('title'),
-            description=params.get('description')
+            label=params.get("title"),
+            description=params.get("description"),
         )
