@@ -2,7 +2,7 @@
 History
 =======
 
-0.1 (unreleased)
+0.1 (04-04-2024)
 ----------------
 
-  - Fixme
+  - First release
