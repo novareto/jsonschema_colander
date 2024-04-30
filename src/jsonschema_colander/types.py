@@ -82,10 +82,6 @@ class String(JSONField):
                 min=params.get('minLength', -1),
                 max=params.get('maxLength', -1)
             ))
-            attributes['min_len'] = params.get('minLength', 0)
-            if 'maxLength' in params:
-                attributes['max_len'] = params.get['maxLength']
-
         if 'default' in available:
             attributes['default'] = params.get('default')
         if 'pattern' in available:
@@ -214,6 +210,9 @@ class Array(JSONField):
                 min=params.get('minItems', -1),
                 max=params.get('maxItems', -1)
             ))
+            attributes['min_len'] = params.get('minItems', 0)
+            if 'maxLength' in params:
+                attributes['max_len'] = params.get('maxItems')
         if 'default' in available:
             attributes['default'] = params['default']
         return validators, attributes
