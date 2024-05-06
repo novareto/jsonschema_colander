@@ -15,7 +15,7 @@ try:
     }
     enum_widgets = {
         colander.String: deform.widget.SelectWidget,
-        colander.Set: deform.widget.CheckboxChoiceWidget,
+        colander.List: deform.widget.CheckboxChoiceWidget,
     }
 except ImportError:
     string_widgets = {}
@@ -174,7 +174,7 @@ class Array(JSONField):
             return self.factory
         elif self.subfield is None:
             if 'choices' in self.attributes:
-                return colander.Set
+                return colander.List
             raise NotImplementedError(
                 "Unsupported array type : 'items' attribute required.")
         return colander.SequenceSchema
