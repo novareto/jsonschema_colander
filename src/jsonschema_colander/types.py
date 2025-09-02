@@ -22,6 +22,11 @@ except ImportError:
     enum_widgets = {}
 
 
+class DateMonth(colander.Date):
+    def __init__(self, format='%m.%Y'):
+        super().__init__(format)
+
+
 @converter.register('string')
 class String(JSONField):
 
@@ -35,6 +40,7 @@ class String(JSONField):
         'date': colander.Date,
         'time': colander.Time,
         'date-time': colander.DateTime,
+        'date-month': DateMonth
     }
 
     validators = {
