@@ -1,28 +1,32 @@
 {
-    "title": "Person",
-    "type": "object",
-    "properties": {
-        "firstName": {
-            "type": "string",
-            "description": "The person's first name."
-        },
-        "lastName": {
-            "type": "string",
-            "description": "The person's last name."
-        },
-        "age": {
-            "description": "Age in years which must be equal to or greater than zero.",
-            "type": "integer",
-            "minimum": 0
-        },
-        "homepage": {
-            "title": "Homepage",
-            "default": "https://myhomepage.org",
-            "minLength": 1,
-            "maxLength": 2083,
-            "format": "uri",
-            "type": "string"
-        }
+  "title": "Person",
+  "type": "object",
+  "properties": {
+    "firstName": {
+      "type": "string",
+      "description": "The person's first name."
     },
-    "required": ["firstName", "lastName"]
+    "lastName": {
+      "type": "string",
+      "description": "The person's last name."
+    },
+    "age": {
+      "description": "Age in years which must be equal to or greater than zero.",
+      "type": "integer",
+      "minimum": 0
+    },
+    "homepage": {
+      "title": "Homepage",
+      "default": "https://myhomepage.org",
+      "minLength": 1,
+      "maxLength": 2083,
+      "format": "uri",
+      "type": "string"
+    }
+  },
+  "required": [
+    "firstName",
+    "lastName"
+  ],
+  "dependentRequired": {}
 }
