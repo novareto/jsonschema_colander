@@ -243,6 +243,7 @@ class Array(JSONField):
                 parent=self.parent,
                 config=self.config,
             )
+            self.subfield.label = "Eintrag"
 
     @classmethod
     def from_json(cls, params: Mapping, **kwargs):
