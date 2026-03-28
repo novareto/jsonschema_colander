@@ -3,7 +3,7 @@ import colander
 from functools import partial
 from typing import Optional, Dict, ClassVar, Type, Iterable, Mapping
 from .meta import JSONField, DefinitionsHolder, READONLY_WIDGET
-from .validators import NumberRange
+from .validators import NumberRange, MultipleOf
 from .converter import converter
 
 
@@ -118,6 +118,7 @@ class Number(JSONField):
         "maximum",
         "exclusiveMinimum",
         "exclusiveMaximum",
+        "multipleOf",
         "default",
     }
 
@@ -143,6 +144,8 @@ class Number(JSONField):
                     exclusive_max=params.get("exclusiveMaximum", None),
                 )
             )
+        if "multipleOf" in available:
+            validators.append(MultipleOf(params["multipleOf"]))
         if "enum" in available:
             attributes["choices"] = [(v, v) for v in params["enum"]]
         return validators, attributes

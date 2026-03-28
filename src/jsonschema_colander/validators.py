@@ -43,3 +43,19 @@ class NumberRange(colander.Range):
                         'val': value, 'max': self.exclusive_max
                     }
                 ))
+
+
+class MultipleOf:
+
+    def __init__(self, multiple_of):
+        self.multiple_of = multiple_of
+
+    def __call__(self, node, value):
+        if value is None or (isinstance(value, float) and math.isnan(value)):
+            return
+        remainder = abs(value % self.multiple_of)
+        if remainder > 1e-9 and abs(remainder - self.multiple_of) > 1e-9:
+            raise colander.Invalid(
+                node,
+                f"Wert muss ein Vielfaches von {self.multiple_of} sein",
+            )

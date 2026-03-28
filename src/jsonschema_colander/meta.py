@@ -61,7 +61,7 @@ class DefinitionsHolder:
 class JSONField(abc.ABC):
     supported: t.ClassVar[set]
     ignore: t.ClassVar[set] = {
-        'name', 'type', 'title', 'description', 'anyOf', 'if', 'then'
+        'name', 'type', 'title', 'description', 'anyOf', 'if', 'then', 'else'
     }
     allowed: t.ClassVar[set] = {'default'}
 
