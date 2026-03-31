@@ -4,12 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonschema_colander"
-version = "0.1"
+version = "0.2"
 authors = [{name = "Novareto GmbH", email = "ck@novareto.de"}]
 maintainers = [{name = "Novareto GmbH", email = "ck@novareto.de"}]
-classifiers = ["Development Status :: 4 - Beta", "Intended Audience :: Developers", "License :: OSI Approved :: MIT License", "Natural Language :: English", "Programming Language :: Python :: 3.9", "Programming Language :: Python :: 3.10", "Programming Language :: Python :: 3.11", "Programming Language :: Python :: 3.12"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "License :: OSI Approved :: MIT License",
+  "Natural Language :: English",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13"
+]
 description = "Colander schema from jsonschema"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 dependencies = ["colander>=1.8", "jsonschema", "unflatten"]
 license = {text = "MIT license"}
 readme = {file = "README.rst", content-type = "text/x-rst"}
