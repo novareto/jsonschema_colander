@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "jsonschema_colander"
-version = "0.2"
+version = "0.3"
 authors = [{name = "Novareto GmbH", email = "ck@novareto.de"}]
 maintainers = [{name = "Novareto GmbH", email = "ck@novareto.de"}]
 classifiers = [
