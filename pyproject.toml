@@ -17,7 +17,7 @@ classifiers = [
   "Programming Language :: Python :: 3.13"
 ]
 description = "Colander schema from jsonschema"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 dependencies = ["colander>=1.8", "jsonschema", "unflatten"]
 license = {text = "MIT license"}
 readme = {file = "README.rst", content-type = "text/x-rst"}
